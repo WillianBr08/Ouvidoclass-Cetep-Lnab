@@ -20,13 +20,12 @@
 5. Configure as variáveis de ambiente (Environment Variables):
    - `ADMIN_USER` - Usuário do administrador
    - `ADMIN_PASS` - Senha do administrador
-   - `SMTP_HOST` - smtp.gmail.com
-   - `SMTP_PORT` - 587
-   - `SMTP_USER` - seu-email@gmail.com
-   - `SMTP_PASS` - senha do app
-   - `MAIL_FROM` - seu-email@gmail.com
-   - `MAIL_TO` - email que receberá as manifestações
-   - `SMTP_STARTTLS` - true
+   - `MAIL_FROM` - Remetente (mesmo email configurado no SendGrid)
+   - `MAIL_TO` - Email(s) da escola (separe por vírgula)
+   - `SENDGRID_API_KEY` - Chave da API gerada no SendGrid
+   - `FLASK_DEBUG` - `false` (opcional)
+
+> **Importante:** O Render bloqueia SMTP direto. Para enviar emails é necessário usar o SendGrid (ou outro serviço API). Crie uma conta gratuita em [sendgrid.com](https://sendgrid.com), valide o remetente e gere uma API Key com permissão “Full Access” ou “Mail Send”. Cole essa chave em `SENDGRID_API_KEY`.
 
 6. Clique em **"Create Web Service"**
 

@@ -3,11 +3,9 @@ from __future__ import annotations
 import os
 import uuid
 from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from typing import Optional
 import html
+import requests
 
 from flask import Flask, render_template, request, redirect, url_for, make_response
 
@@ -15,17 +13,65 @@ import storage
 import db
 
 
+def _send_email_via_sendgrid(subject: str, html_body: str, text_body: str, recipients: list[str], category: Optional[str] = None) -> bool:
+    """Envia emails usando a API do SendGrid."""
+    api_key = os.getenv('SENDGRID_API_KEY')
+    sender = os.getenv('MAIL_FROM') or os.getenv('SMTP_USER')
+
+    if not api_key:
+        print("[EMAIL] SENDGRID_API_KEY não configurada. Pulei envio.")
+        return False
+
+    if not sender:
+        print("[EMAIL] MAIL_FROM (ou SMTP_USER) não configurado. Pulei envio.")
+        return False
+
+    if not recipients:
+        print("[EMAIL] Nenhum destinatário informado.")
+        return False
+
+    payload = {
+        "personalizations": [{
+            "to": [{"email": addr} for addr in recipients]
+        }],
+        "from": {"email": sender},
+        "subject": subject,
+        "content": [
+            {"type": "text/plain", "value": text_body},
+            {"type": "text/html", "value": html_body}
+        ]
+    }
+
+    if category:
+        payload["categories"] = [category]
+
+    try:
+        response = requests.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            json=payload,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
+        if response.status_code >= 400:
+            print(f"[EMAIL] Erro SendGrid {response.status_code}: {response.text}")
+            return False
+        print(f"[EMAIL] Email enviado via SendGrid para {', '.join(recipients)}")
+        return True
+    except requests.RequestException as exc:
+        print(f"[EMAIL] Falha ao chamar SendGrid: {exc}")
+        return False
+
+
 def send_report_email_to_school(report: dict, user: dict) -> None:
     """Envia email para a escola quando uma manifestação é criada"""
-    host = os.getenv('SMTP_HOST')
-    port = int(os.getenv('SMTP_PORT', '587'))
-    username = os.getenv('SMTP_USER')
-    password = os.getenv('SMTP_PASS')
-    mail_from = os.getenv('MAIL_FROM') or username
-    mail_to = os.getenv('MAIL_TO')
-    use_starttls = os.getenv('SMTP_STARTTLS', 'true').lower() in ('1','true','yes','on')
+    mail_to_env = os.getenv('MAIL_TO', '')
+    recipients = [email.strip() for email in mail_to_env.split(',') if email.strip()]
 
-    if not host or not username or not password or not mail_to or not mail_from:
+    if not recipients:
+        print("[EMAIL] MAIL_TO não configurado, não há para quem enviar.")
         return
 
     assunto = f"📝 {report['tipo'].upper()} — {report['titulo']}"
@@ -304,51 +350,13 @@ def send_report_email_to_school(report: dict, user: dict) -> None:
             f"Para responder, acesse o painel administrativo."
         )
 
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = assunto
-    msg['From'] = mail_from
-    msg['To'] = mail_to
-    
-    part1 = MIMEText(texto_corpo, 'plain', 'utf-8')
-    part2 = MIMEText(html_corpo, 'html', 'utf-8')
-    
-    msg.attach(part1)
-    msg.attach(part2)
-
-    with smtplib.SMTP(host, port, timeout=10) as smtp:
-        if use_starttls:
-            smtp.starttls()
-        smtp.login(username, password)
-        smtp.sendmail(mail_from, [mail_to], msg.as_string())
+    _send_email_via_sendgrid(assunto, html_corpo, texto_corpo, recipients, category="report-notification")
 
 
 def send_response_email_to_user(report: dict, user: dict, admin_message: str) -> bool:
     """Envia email de resposta do administrador para o manifestante. Retorna True se enviado com sucesso."""
-    host = os.getenv('SMTP_HOST')
-    port = int(os.getenv('SMTP_PORT', '587'))
-    username = os.getenv('SMTP_USER')
-    password = os.getenv('SMTP_PASS')
-    mail_from = os.getenv('MAIL_FROM') or username
-    use_starttls = os.getenv('SMTP_STARTTLS', 'true').lower() in ('1','true','yes','on')
-
-    print(f"[DEBUG EMAIL] Configurações SMTP:")
-    print(f"  Host: {host}")
-    print(f"  Port: {port}")
-    print(f"  User: {username}")
-    print(f"  From: {mail_from}")
-    print(f"  To: {user.get('email', 'N/A')}")
-    print(f"  STARTTLS: {use_starttls}")
-
-    if not host or not username or not password or not mail_from:
-        print(f"[ERRO EMAIL] Configurações SMTP incompletas!")
-        print(f"  Host: {'OK' if host else 'FALTANDO'}")
-        print(f"  Username: {'OK' if username else 'FALTANDO'}")
-        print(f"  Password: {'OK' if password else 'FALTANDO'}")
-        print(f"  From: {'OK' if mail_from else 'FALTANDO'}")
-        return False
-
     if not user.get('email'):
-        print(f"[ERRO EMAIL] Usuário não tem email cadastrado")
+        print("[ERRO EMAIL] Usuário não tem email cadastrado")
         return False
 
     try:
@@ -518,37 +526,10 @@ def send_response_email_to_user(report: dict, user: dict, admin_message: str) ->
             f"Ouvidoria CETEP/LNAB"
         )
 
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = assunto
-        msg['From'] = mail_from
-        msg['To'] = user['email']
-        
-        part1 = MIMEText(texto_corpo, 'plain', 'utf-8')
-        part2 = MIMEText(html_corpo, 'html', 'utf-8')
-        
-        msg.attach(part1)
-        msg.attach(part2)
-
-        print(f"[DEBUG EMAIL] Conectando ao servidor SMTP...")
-        with smtplib.SMTP(host, port, timeout=30) as smtp:
-            print(f"[DEBUG EMAIL] Conectado. Iniciando STARTTLS...")
-            if use_starttls:
-                smtp.starttls()
-            print(f"[DEBUG EMAIL] Fazendo login...")
-            smtp.login(username, password)
-            print(f"[DEBUG EMAIL] Enviando email para {user['email']}...")
-            smtp.sendmail(mail_from, [user['email']], msg.as_string())
-            print(f"[DEBUG EMAIL] Email enviado com sucesso!")
-            return True
-    except smtplib.SMTPAuthenticationError as e:
-        print(f"[ERRO EMAIL] Falha de autenticação SMTP: {e}")
-        return False
-    except smtplib.SMTPException as e:
-        print(f"[ERRO EMAIL] Erro SMTP: {e}")
-        return False
+        return _send_email_via_sendgrid(assunto, html_corpo, texto_corpo, [user['email']], category="report-response")
     except Exception as e:
         import traceback
-        print(f"[ERRO EMAIL] Erro inesperado: {e}")
+        print(f"[ERRO EMAIL] Erro inesperado ao preparar email: {e}")
         print(f"[ERRO EMAIL] Traceback: {traceback.format_exc()}")
         return False
 
