@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meu Perfil — Ouvidoria</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">CETEP/LNAB</div>
+    <nav>
+      <a href="{{ url_for('index') }}">Início</a>
+      <span class="user">Olá, {{ user.name.split(' ')[0] if user else 'Usuário' }}</span>
+      <form method="post" action="{{ url_for('logout_post') }}" style="display:inline">
+        <button class="link" type="submit">Sair</button>
+      </form>
+    </nav>
+  </header>
+  <main class="container narrow">
+    <section class="panel">
+      <div class="panel-header"><h2>Meu Perfil</h2></div>
+      <div class="form">
+        <div class="row">
+          <label>Nome</label>
+          <div style="padding:12px 14px;color:#e5e7eb;">{{ user.name }}</div>
+        </div>
+        {% if user.matricula %}
+        <div class="row">
+          <label>Matrícula</label>
+          <div style="padding:12px 14px;color:#e5e7eb;">{{ user.matricula }}</div>
+        </div>
+        {% endif %}
+        <div class="row">
+          <label>Email atual</label>
+          <div style="padding:12px 14px;color:#e5e7eb;">
+            {% if user.email.endswith('@matricula.local') %}
+              <span style="color:#f59e0b;">Nenhum email cadastrado</span>
+            {% else %}
+              {{ user.email }}
+            {% endif %}
+          </div>
+        </div>
+        
+        {% if user.email.endswith('@matricula.local') or not user.email %}
+        <div class="panel" style="margin-top:20px;background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);">
+          <div class="panel-header"><h3 style="color:#f59e0b;">Adicionar Email</h3></div>
+          <form class="form" method="post" action="{{ url_for('update_email') }}">
+            <div class="row">
+              <label for="email">Email para receber respostas</label>
+              <input id="email" name="email" type="email" placeholder="seu.email@gmail.com" required />
+              <p class="form-note" style="margin-top:4px;color:#64748b;font-size:12px;">Adicione um email para receber as respostas do administrador por email</p>
+            </div>
+            {% if error %}<p class="error">{{ error }}</p>{% endif %}
+            <div class="actions">
+              <button class="primary" type="submit">Salvar Email</button>
+            </div>
+          </form>
+        </div>
+        {% else %}
+        <div class="panel" style="margin-top:20px;">
+          <div class="panel-header"><h3>Alterar Email</h3></div>
+          <form class="form" method="post" action="{{ url_for('update_email') }}">
+            <div class="row">
+              <label for="email">Novo email</label>
+              <input id="email" name="email" type="email" placeholder="seu.novo.email@gmail.com" value="{{ user.email }}" required />
+              <p class="form-note" style="margin-top:4px;color:#64748b;font-size:12px;">Altere seu email para receber as respostas do administrador</p>
+            </div>
+            {% if error %}<p class="error">{{ error }}</p>{% endif %}
+            <div class="actions">
+              <button class="primary" type="submit">Atualizar Email</button>
+            </div>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+  <footer class="footer">© CETEP/LNAB — Ouvidoria</footer>
+</body>
+</html>
+

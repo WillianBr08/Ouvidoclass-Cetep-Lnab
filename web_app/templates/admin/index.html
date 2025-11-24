@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Ouvidoria</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">Admin</div>
+    <nav>
+      <form method="post" action="{{ url_for('admin_logout') }}" style="display:inline">
+        <button class="link" type="submit">Sair</button>
+      </form>
+    </nav>
+  </header>
+  <main class="container">
+    <section class="panel">
+      <div class="panel-header"><h2>Todos os envios</h2></div>
+      <div class="list">
+        {% if reports and reports|length > 0 %}
+          {% for r in reports %}
+            <a class="item {{ type_class(r.tipo) }}" href="{{ url_for('admin_view_report', rid=r.id) }}" style="text-decoration:none;display:block;">
+              <div class="meta">
+                {{ r.tipo.upper() }} • {{ (r.createdAt | replace('T',' '))[:16] }}{% if r.anonimo %} • ANÔNIMO{% endif %}
+                {% if r.has_response %}
+                  <span style="color:#10b981;margin-left:12px;">✓ Respondido</span>
+                {% else %}
+                  <span style="color:#f59e0b;margin-left:12px;">⏳ Aguardando resposta</span>
+                {% endif %}
+              </div>
+              <div class="title">{{ r.titulo }}</div>
+              <div class="body">{{ r.mensagem }}</div>
+              <div class="meta">Autor: {% if r.anonimo %}ANÔNIMO{% else %}{{ r.alunoNome or '—' }} ({{ r.turma or '—' }}){% endif %}</div>
+            </a>
+          {% endfor %}
+        {% else %}
+          <p class="hint">Nenhum envio ainda.</p>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+
+

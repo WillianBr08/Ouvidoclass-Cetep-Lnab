@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizar envio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <main class="container">
+    <a class="back" href="{{ url_for('index') }}">← Voltar</a>
+    <div class="mail {{ type_class(r.tipo) }}">
+    <div class="bar">
+      <div class="from">Ouvidoria CETEP/LNAB</div>
+      <div class="badge">{{ r.tipo.upper() }}</div>
+    </div>
+    <div class="subject">{{ r.titulo }}</div>
+    <div class="meta">Para: você — {{ (r.createdAt | replace('T',' '))[:16] }}</div>
+    <div class="row">Aluno: {% if r.anonimo %}ANÔNIMO{% else %}{{ r.alunoNome or '—' }}{% endif %} | Turma: {% if r.anonimo %}—{% else %}{{ r.turma or '—' }}{% endif %}</div>
+    <div class="content">
+      <strong>Mensagem:</strong><br><br>
+      {{ r.mensagem }}
+    </div>
+    
+    {% if r.response %}
+    <div class="content" style="background:rgba(16,185,129,0.1);border-top:1px solid rgba(16,185,129,0.3);padding:20px;margin-top:20px;">
+      <strong style="color:#10b981;">Resposta da Ouvidoria ({{ (r.response.created_at | replace('T',' '))[:16] }}):</strong><br><br>
+      {{ r.response.admin_message }}
+    </div>
+    {% else %}
+    <div class="content" style="background:rgba(245,158,11,0.1);border-top:1px solid rgba(245,158,11,0.3);padding:20px;margin-top:20px;color:#f59e0b;">
+      <strong>⏳ Aguardando resposta da Ouvidoria</strong>
+    </div>
+    {% endif %}
+    
+    <div class="actions" style="margin-top:20px;padding:0 16px 20px;">
+      <form method="post" action="{{ url_for('delete_report', rid=r.id) }}" onsubmit="return confirm('Tem certeza que deseja apagar esta manifestação?');">
+        <button class="btn-danger" type="submit">Apagar manifesto</button>
+      </form>
+    </div>
+    </div>
+  </main>
+</body>
+</html>
+
+

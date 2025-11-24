@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ouvidoria CETEP/LNAB</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">CETEP/LNAB</div>
+    <nav>
+      <a href="{{ url_for('index') }}" class="active">Início</a>
+      {% if current_user %}
+        <span class="user">Olá, {{ current_user.name.split(' ')[0] }}</span>
+        <a href="{{ url_for('profile_page') }}">Perfil</a>
+        <form method="post" action="{{ url_for('logout_post') }}" style="display:inline">
+          <button class="link" type="submit">Sair</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('login_page') }}">Entrar</a>
+        <a class="cta" href="{{ url_for('register_page') }}">Registrar</a>
+        <a href="{{ url_for('admin_login') }}" style="color:#ffffff">Admin</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Ouvidoria Cetep Lnab</h1>
+      <p class="subtitle">Denúncias, elogios, reclamações e sugestões — em um só lugar.</p>
+      <div class="cards">
+        <div class="card">
+          <h3>Privacidade</h3>
+          <p>Suas informações são protegidas. Envie com segurança.</p>
+        </div>
+        <div class="card">
+          <h3>Sigilo</h3>
+          <p>O sigilo é total, ninguém vai saber da sua denúncia além dos responsáveis.</p>
+        </div>
+        <div class="card">
+          <h3>Acompanhamento</h3>
+          <p>Acompanhe seus envios após fazer login.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="envio-panel">
+      <div class="panel-header">
+        <h2>Novo envio</h2>
+        <span class="hint">{% if current_user %}Olá, {{ current_user.name }}{% else %}Faça login para enviar{% endif %}</span>
+      </div>
+      <form class="form" method="post" action="{{ url_for('create_report') }}">
+        <div class="row">
+          <label>Tipo</label>
+          <div class="segmented">
+            {% for v in ['denúncia','elogio','reclamação','sugestão'] %}
+            <label><input type="radio" name="tipo" value="{{ v }}" {% if loop.index0 == 0 %}checked{% endif %}> {{ v.capitalize() }}</label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row">
+          <label for="alunoNome">Nome do aluno</label>
+          <input id="alunoNome" name="alunoNome" type="text" placeholder="Ex.: João Silva" />
+        </div>
+        <div class="row">
+          <label for="turma">Turma</label>
+          <input id="turma" name="turma" type="text" placeholder="Ex.: 3ºTIM3" />
+        </div>
+        <div class="row">
+          <label for="anonimo">
+            <input id="anonimo" name="anonimo" type="checkbox" />
+            <span>Anônimo</span>
+          </label>
+        </div>
+        <div class="row">
+          <label for="titulo">Título</label>
+          <input id="titulo" name="titulo" type="text" placeholder="Resumo em poucas palavras" required />
+        </div>
+        <div class="row">
+          <label for="mensagem">Mensagem</label>
+          <textarea id="mensagem" name="mensagem" rows="5" placeholder="Descreva com detalhes" required></textarea>
+        </div>
+        <div class="actions">
+          <button class="primary" type="submit" {% if not current_user %}disabled{% endif %}>Enviar</button>
+        </div>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <p class="form-note">Ao enviar, você concorda com o tratamento responsável das informações.</p>
+      </form>
+    </section>
+
+    <section class="panel" id="meus-envios" {% if not current_user %}hidden{% endif %}>
+      <div class="panel-header"><h2>Meus envios</h2></div>
+      <div class="list">
+        {% if reports and reports|length > 0 %}
+          {% for r in reports %}
+            <a class="item {{ type_class(r.tipo) }}" href="{{ url_for('view_report', rid=r.id) }}">
+              <div class="meta">
+                {{ r.tipo.upper() }} • {{ (r.createdAt | replace('T',' '))[:16] }}{% if r.anonimo %} • ANÔNIMO{% endif %}
+                {% if r.has_response %}
+                  <span style="color:#10b981;margin-left:12px;">✓ Respondido</span>
+                {% else %}
+                  <span style="color:#f59e0b;margin-left:12px;">⏳ Aguardando</span>
+                {% endif %}
+              </div>
+              <div class="title">{{ r.titulo }}</div>
+              <div class="body">{{ r.mensagem }}</div>
+            </a>
+          {% endfor %}
+        {% else %}
+          <p class="hint">Nenhum envio ainda.</p>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">© CETEP/LNAB — Ouvidoria</footer>
+</body>
+</html>
+
+

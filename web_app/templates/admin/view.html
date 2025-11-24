@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualizar Manifestação — Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">Admin — Ouvidoria</div>
+    <nav>
+      <a href="{{ url_for('admin_index') }}">← Voltar</a>
+      <form method="post" action="{{ url_for('admin_logout') }}" style="display:inline">
+        <button class="link" type="submit">Sair</button>
+      </form>
+    </nav>
+  </header>
+  <main class="container">
+    <div class="mail {{ type_class(report.tipo) }}">
+      <div class="bar">
+        <div class="from">Ouvidoria CETEP/LNAB</div>
+        <div class="badge">{{ report.tipo.upper() }}</div>
+      </div>
+      <div class="subject">{{ report.titulo }}</div>
+      <div class="meta">
+        De: {% if report.anonimo %}ANÔNIMO{% else %}{{ report.user.name if report.user else '—' }} &lt;{{ report.user.email if report.user else '—' }}&gt;{% endif %} — {{ (report.createdAt | replace('T',' '))[:16] }}
+      </div>
+      <div class="row">Aluno: {% if report.anonimo %}ANÔNIMO{% else %}{{ report.alunoNome or '—' }}{% endif %} | Turma: {% if report.anonimo %}—{% else %}{{ report.turma or '—' }}{% endif %}</div>
+      <div class="content">
+        <strong>Mensagem do manifestante:</strong><br><br>
+        {{ report.mensagem }}
+      </div>
+      
+      {% if report.response %}
+      <div class="content" style="background:rgba(16,185,129,0.1);border-top:1px solid rgba(16,185,129,0.3);padding:20px;margin-top:20px;">
+        <strong style="color:#10b981;">Resposta enviada em {{ (report.response.created_at | replace('T',' '))[:16] }}:</strong><br><br>
+        {{ report.response.admin_message }}
+      </div>
+      {% else %}
+      <div class="panel" style="margin:20px 0;">
+        <div class="panel-header"><h2>Responder Manifestação</h2></div>
+        <form class="form" method="post" action="{{ url_for('admin_respond', rid=report.id) }}">
+          <div class="row">
+            <label for="admin_message">Resposta</label>
+            <textarea id="admin_message" name="admin_message" rows="8" placeholder="Digite sua resposta para o manifestante..." required></textarea>
+          </div>
+          <div class="actions">
+            <button class="primary" type="submit">Enviar Resposta</button>
+          </div>
+          <p class="form-note">
+            A resposta será enviada automaticamente por email para o manifestante.
+            {% if report.anonimo %}
+              <br><span style="color:#f59e0b;">⚠️ Manifestação anônima. A resposta será enviada por email, mas o email do manifestante não será exibido aqui.</span>
+            {% elif report.user and report.user.email.endswith('@matricula.local') %}
+              <br><span style="color:#f59e0b;">⚠️ Este usuário não tem email cadastrado. A resposta aparecerá apenas no site.</span>
+            {% else %}
+              <br>Email do manifestante: <strong>{{ report.user.email if report.user else 'N/A' }}</strong>
+            {% endif %}
+          </p>
+        </form>
+      </div>
+      {% endif %}
+      
+      <div class="actions" style="margin-top:20px;padding:0 16px 20px;">
+        <form method="post" action="{{ url_for('admin_delete_report', rid=report.id) }}" onsubmit="return confirm('Tem certeza que deseja apagar esta manifestação?');">
+          <button class="btn-danger" type="submit">Apagar Manifestação</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
+

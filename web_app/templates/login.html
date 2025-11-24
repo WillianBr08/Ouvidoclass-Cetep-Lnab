@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrar — Ouvidoria</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">CETEP/LNAB</div>
+    <nav>
+      <a href="{{ url_for('index') }}">Início</a>
+      <a href="{{ url_for('login_page') }}" class="active">Entrar</a>
+      <a href="{{ url_for('register_page') }}" class="cta">Registrar</a>
+    </nav>
+  </header>
+  <main class="container narrow">
+    <section class="panel">
+      <div class="panel-header"><h2>Entrar</h2></div>
+      <form class="form" method="post" action="{{ url_for('login_post') }}">
+        <div class="row">
+          <label for="email_enova">Email enova</label>
+          <input id="email_enova" name="email_enova" type="email" placeholder="seu.email@enova.educacao.ba.gov.br" />
+        </div>
+        <div class="row">
+          <label for="matricula">Matrícula</label>
+          <input id="matricula" name="matricula" type="text" placeholder="12345678" pattern="[0-9]{8}" maxlength="8" />
+        </div>
+        <p class="form-note" style="margin:8px 0;color:#64748b;font-size:13px;">Preencha o email enova ou a matrícula</p>
+        <div class="row">
+          <label for="password">Senha</label>
+          <input id="password" name="password" type="password" placeholder="Sua senha" maxlength="20" required />
+        </div>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <div class="actions">
+          <button class="primary" type="submit">Entrar</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <footer class="footer">© CETEP/LNAB — Ouvidoria</footer>
+</body>
+</html>
+
+

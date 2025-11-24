@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrar — Ouvidoria</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <style>
+    .register-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+    }
+    .register-tab {
+      padding: 14px 24px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: 400;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .register-tab:hover {
+      color: var(--text);
+    }
+    .register-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .register-form {
+      display: none;
+    }
+    .register-form.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">CETEP/LNAB</div>
+    <nav>
+      <a href="{{ url_for('index') }}">Início</a>
+      <a href="{{ url_for('login_page') }}">Entrar</a>
+      <a href="{{ url_for('register_page') }}" class="active cta">Registrar</a>
+    </nav>
+  </header>
+  <main class="container narrow">
+    <section class="panel">
+      <div class="panel-header"><h2>Criar conta</h2></div>
+      <div class="register-tabs">
+        <button type="button" class="register-tab active" onclick="showForm('enova')">Enova</button>
+        <button type="button" class="register-tab" onclick="showForm('matricula')">Matrícula</button>
+      </div>
+      
+      <!-- Formulário Enova -->
+      <form id="form-enova" class="form register-form active" method="post" action="{{ url_for('register_post') }}">
+        <input type="hidden" name="tipo_registro" value="enova" />
+        <div class="row">
+          <label for="name_enova">Nome</label>
+          <input id="name_enova" name="name" type="text" placeholder="Seu nome completo" required />
+        </div>
+        <div class="row">
+          <label for="email_enova">Email enova</label>
+          <input id="email_enova" name="email_enova" type="email" placeholder="seu.email@enova.educacao.ba.gov.br" required />
+          <p class="form-note" style="margin-top:4px;color:#64748b;font-size:12px;">Apenas emails @enova.educacao.ba.gov.br são aceitos</p>
+        </div>
+        <div class="row">
+          <label for="password_enova">Senha</label>
+          <input id="password_enova" name="password" type="password" placeholder="Crie uma senha (máx. 20 caracteres)" maxlength="20" required />
+        </div>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <div class="actions">
+          <button class="primary" type="submit">Registrar</button>
+        </div>
+      </form>
+      
+      <!-- Formulário Matrícula -->
+      <form id="form-matricula" class="form register-form" method="post" action="{{ url_for('register_post') }}">
+        <input type="hidden" name="tipo_registro" value="matricula" />
+        <div class="row">
+          <label for="name_matricula">Nome</label>
+          <input id="name_matricula" name="name" type="text" placeholder="Seu nome completo" required />
+        </div>
+        <div class="row">
+          <label for="matricula">Matrícula</label>
+          <input id="matricula" name="matricula" type="text" placeholder="12345678" pattern="[0-9]{8}" maxlength="8" required />
+          <p class="form-note" style="margin-top:4px;color:#64748b;font-size:12px;">8 dígitos, apenas números</p>
+        </div>
+        <div class="row">
+          <label for="email_notificacao">Email para receber respostas (opcional)</label>
+          <input id="email_notificacao" name="email_notificacao" type="email" placeholder="seu.email@gmail.com" />
+          <p class="form-note" style="margin-top:4px;color:#64748b;font-size:12px;">Adicione um email para receber as respostas do administrador</p>
+        </div>
+        <div class="row">
+          <label for="password_matricula">Senha</label>
+          <input id="password_matricula" name="password" type="password" placeholder="Crie uma senha (máx. 20 caracteres)" maxlength="20" required />
+        </div>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <div class="actions">
+          <button class="primary" type="submit">Registrar</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <footer class="footer">© CETEP/LNAB — Ouvidoria</footer>
+  <script>
+    function showForm(tipo) {
+      // Esconder todos os formulários
+      document.querySelectorAll('.register-form').forEach(form => {
+        form.classList.remove('active');
+      });
+      // Remover active de todas as tabs
+      document.querySelectorAll('.register-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      // Mostrar formulário selecionado
+      document.getElementById('form-' + tipo).classList.add('active');
+      // Ativar tab selecionada
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>
+
+
